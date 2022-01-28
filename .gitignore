@@ -2,3 +2,5 @@ boot.d
 a-boot.d
 build/
 kernel8.img
+.gdb_history
+peda-session*

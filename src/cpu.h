@@ -1,7 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-void spin_for_cpu_cyles(unsigned long ms);
+extern void delay(unsigned long);
 void cpu_nop(void);
 
 #endif

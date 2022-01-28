@@ -1,6 +1,6 @@
-ARMGNU ?= aarch64-linux-gnu
+ARMGNU ?= aarch64-elf
 
-COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only
+COPS = -Wall -g -Iinclude -ffreestanding -nostdlib -nostartfiles -g3 -gdwarf-2
 ASMOPS = -Iinclude
 
 SRC_DIR = src
@@ -9,7 +9,7 @@ BUILD_DIR = build
 all : kernel8.img
 
 run:
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio -display none
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio -display none -s
 	# -d in_asm
 
 clean:
@@ -17,10 +17,10 @@ clean:
 
 $(BUILD_DIR)/%_c.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
-	$(ARMGNU)-gcc $(COPS) -MMD -c $< -o $@
+	$(ARMGNU)-gcc $(COPS) -c $< -o $@
 
 $(BUILD_DIR)/%_s.o: $(SRC_DIR)/%.S
-	$(ARMGNU)-gcc $(ASMOPS) -MMD -c $< -o $@
+	$(ARMGNU)-gcc $(ASMOPS) -c $< -o $@
 
 C_FILES = $(wildcard $(SRC_DIR)/*.c)
 ASM_FILES = $(wildcard $(SRC_DIR)/*.S)

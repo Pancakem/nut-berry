@@ -3,16 +3,14 @@
 
 #include "periph_base.h"
 
-enum {
-  UART_BASE = BASE + 0x20100,
-  DR = UART_BASE,
-  FR = UART_BASE + 0x18,
-  IBRD = UART_BASE + 0x24,
-  FRBD = UART_BASE + 0x28,
-  LCRH = UART_BASE + 0x2C,
-  CR = UART_BASE + 0x30,
-  ICR = UART_BASE + 0x44,
-};
+#define UART_BASE (BASE + 0x0020100)
+#define DR (UART_BASE + 0x0)
+#define FR (UART_BASE + 0x18)
+#define IBRD (UART_BASE + 0x24)
+#define FRBD (UART_BASE + 0x28)
+#define LCRH (UART_BASE + 0x2C)
+#define CR (UART_BASE + 0x30)
+#define ICR (UART_BASE + 0x44)
 
 // FR
 #define PL011_BUSY (1 << 3)
