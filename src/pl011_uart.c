@@ -1,6 +1,7 @@
 #include "pl011_uart.h"
 #include "gpio.h"
 #include "mbox.h"
+#include "util.h"
 
 /* PL011 UART registers */
 #define UART0_DR ((volatile unsigned int *)(MMIO_BASE + 0x00201000))
@@ -100,13 +101,7 @@ void pl011_uart_puts(char *s) {
  * Display a binary value in hexadecimal
  */
 void pl011_uart_hex(unsigned int d) {
-  unsigned int n;
-  int c;
-  for (c = 28; c >= 0; c -= 4) {
-    // get highest tetrad
-    n = (d >> c) & 0xF;
-    // 0-9 => '0'-'9', 10-15 => 'A'-'F'
-    n += n > 9 ? 0x37 : 0x30;
-    pl011_uart_send(n);
-  }
+  char hex[9];
+  bin_to_hex(hex, d);
+  pl011_uart_puts(hex);
 }

@@ -9,7 +9,7 @@ BUILD_DIR = build
 all : kernel8.img
 
 run:
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio -display none -s
+	qemu-system-aarch64 -M raspi3b -kernel kernel8.img -serial stdio -display none -s
 	# -d in_asm
 
 clean:
