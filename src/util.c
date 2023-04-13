@@ -1,4 +1,7 @@
 #include "util.h"
+#include "pl011_uart.h"
+#include <stdarg.h>
+#include <stdint.h>
 
 void bin_to_hex(char *val, unsigned int d) {
   unsigned int n;
@@ -47,9 +50,6 @@ void memcpy(char *dest, const char *src, unsigned int len) {
     dest[i] = src[i];
   }
 }
-
-#include <stdarg.h>
-#include <stdint.h>
 
 #define min(a, b)                                                              \
   __extension__({                                                              \
@@ -182,3 +182,5 @@ int my_sprintf(char *buf, const char *fmt, ...) {
   va_end(va);
   return ret;
 }
+
+void putc(void *p, char c) { pl011_uart_send(c); }

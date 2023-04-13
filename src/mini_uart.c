@@ -37,12 +37,12 @@ void mini_uart_init() {
   *GPPUD = 0; // enable pins 14 and 15
   r = 150;
   while (r--) {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   }
   *GPPUDCLK0 = (1 << 14) | (1 << 15);
   r = 150;
   while (r--) {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   }
   *GPPUDCLK0 = 0;   // flush GPIO setup
   *AUX_MU_CNTL = 3; // enable Tx, Rx
@@ -54,7 +54,7 @@ void mini_uart_init() {
 void mini_uart_send(unsigned int c) {
   /* wait until we can send */
   do {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   } while (!(*AUX_MU_LSR & 0x20));
   /* write the character to the buffer */
   *AUX_MU_IO = c;
@@ -67,7 +67,7 @@ char mini_uart_getc() {
   char r;
   /* wait until something is in the buffer */
   do {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   } while (!(*AUX_MU_LSR & 0x01));
   /* read it and return */
   r = (char)(*AUX_MU_IO);

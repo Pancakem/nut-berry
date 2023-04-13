@@ -42,12 +42,12 @@ void pl011_uart_init() {
   *GPPUD = 0; // enable pins 14 and 15
   r = 150;
   while (r--) {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   }
   *GPPUDCLK0 = (1 << 14) | (1 << 15);
   r = 150;
   while (r--) {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   }
   *GPPUDCLK0 = 0; // flush GPIO setup
 
@@ -64,7 +64,7 @@ void pl011_uart_init() {
 void pl011_uart_send(unsigned int c) {
   /* wait until we can send */
   do {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   } while (*UART0_FR & 0x20);
   /* write the character to the buffer */
   *UART0_DR = c;
@@ -77,7 +77,7 @@ char pl011_uart_getc() {
   char r;
   /* wait until something is in the buffer */
   do {
-    asm volatile("nop");
+    __asm__ volatile("nop");
   } while (*UART0_FR & 0x10);
   /* read it and return */
   r = (char)(*UART0_DR);

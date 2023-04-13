@@ -1,9 +1,9 @@
 #include "framebuffer.h"
 #include "mbox.h"
-#include "pl011_uart.h"
+#include "printf.h"
 #include "util.h"
 
-int init_framebuffer(struct framebuffer *fb) {
+int init_framebuffer(framebuffer_t *fb) {
   fb->width = 1024;
   fb->height = 768;
   fb->depth = 32;
@@ -59,14 +59,9 @@ int init_framebuffer(struct framebuffer *fb) {
 
   mbox[34] = MBOX_TAG_LAST;
 
-  int result = mbox_call(MBOX_CH_FB);
-  char res[33] = {0};
-  my_sprintf(res, "\n%d", result);
-  pl011_uart_puts(res);
+  mbox_call(MBOX_CH_FB);
   if (mbox[28] != 0) {
-    fb->pointer =
-        (unsigned int *)(mbox[28] &
-                         0x3FFFFFFF); // convert pointer to ARM address
+    fb->pointer = (mbox[28] & 0x3FFFFFFF); // convert pointer to ARM address
     fb->width = mbox[5];
     fb->height = mbox[33];
     fb->isrgb = mbox[24];
@@ -74,4 +69,10 @@ int init_framebuffer(struct framebuffer *fb) {
   }
 
   return 1;
+}
+
+void write_pixel(uint8_t x, uint8_t y, const pixel_t *pixel,
+                 framebuffer_t *fb) {
+  uint32_t *loc = (uint32_t *)(fb->pointer + y * fb->pitch + x * 78);
+  memcpy((char *)loc, (const char *)pixel, 78);
 }

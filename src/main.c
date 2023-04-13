@@ -1,6 +1,8 @@
 #include "framebuffer.h"
 #include "mbox.h"
 #include "pl011_uart.h"
+#include "printf.h"
+#include "timer.h"
 #include "util.h"
 
 int device_serial(char *serial) {
@@ -28,25 +30,37 @@ int device_serial(char *serial) {
   return 1;
 }
 
-char *uname() { return "Nut Berry"; }
+char *uname() { return "\nNut Berry"; }
 
 void kmain() {
   pl011_uart_init();
+  init_printf(NULL, putc);
 
-  pl011_uart_puts("Booting Nut Berry!\n");
+  printf("Booting Nut Berry!\n");
 
   char serial[20] = {0};
   if (device_serial(serial) == 0) {
-    pl011_uart_puts("Device serial: ");
-    pl011_uart_puts(serial);
-    pl011_uart_puts("\n");
+    printf("Device serial: %s\n", serial);
   } else {
-    pl011_uart_puts("Unable to query serial!\n");
+    printf("Unable to query serial!\n");
   }
 
-  struct framebuffer fb;
-  pl011_uart_puts("Initializing framebuffer");
+  int el = getcurrentEL();
+  printf("Current EL is %d\n", el);
+
+  printf("\nEnabling timer\n");
+  enable_timer();
+
+  framebuffer_t fb;
+  printf("Initializing framebuffer\n");
+  // int res =
   init_framebuffer(&fb);
+  /* if (res != 0) */
+  /*   printf("framebuffer init failed %d\n", res); */
+  /* else */
+  /* printf("Resolution:\n \t Height: %d\n\t Width: %d\n\t Pitch: %d",
+   * fb.height, */
+  /*        fb.width, fb.pitch); */
 
   // echo everything back
   while (1) {
@@ -62,9 +76,8 @@ void kmain() {
       break;
     }
 
-    /* pl011_uart_puts("Echoing "); */
-    /* pl011_uart_send(str); */
     if (strcmp(command, "uname") == 0)
-      pl011_uart_puts(uname());
+      printf(uname());
+    memzero(command, 10);
   }
 }

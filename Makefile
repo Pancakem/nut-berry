@@ -1,6 +1,6 @@
 ARMGNU ?= aarch64-elf
 
-COPS = -Wall -g -Iinclude -ffreestanding -nostdlib -nostartfiles -g3 -gdwarf-2
+COPS = -Wall -g -Iinclude -ffreestanding -nostdlib -nostartfiles -g3 -gdwarf-2 -std=c2x -fpic #-Werror
 ASMOPS = -Iinclude
 
 SRC_DIR = src
@@ -9,7 +9,7 @@ BUILD_DIR = build
 all : kernel8.img
 
 run:
-	qemu-system-aarch64 -M raspi3b -kernel kernel8.img -serial stdio -display none -s
+	qemu-system-aarch64 -M raspi3b -kernel kernel8.img -serial stdio -s
 	# -d in_asm
 
 clean:

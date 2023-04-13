@@ -1,8 +1,11 @@
 #include "mbox.h"
 #include "gpio.h"
+#include "printf.h"
+
+#include <stdint.h>
 
 /* mailbox message buffer */
-volatile unsigned int __attribute__((aligned(16))) mbox[36];
+volatile uint32_t __attribute__((aligned(16))) mbox[36];
 
 #define VIDEOCORE_MBOX (MMIO_BASE + 0x0000B880)
 #define MBOX_READ ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x0))
@@ -18,22 +21,22 @@ volatile unsigned int __attribute__((aligned(16))) mbox[36];
 /* map struct to the base address  */
 static mailbox_t *mbx = (mailbox_t *)VIDEOCORE_MBOX;
 
-int mailbox_read(unsigned char channel) {
-  int val = -1;
+int mailbox_read(uint8_t channel) {
+  uint32_t val;
 
-  while ((val & 0xF) != channel) {
-    /* is there a response to our message */
-    while ((mbx->status & MBOX_EMPTY) != 0)
+  while (1) {
+    while (mbx->status & MBOX_EMPTY)
       ;
-
     val = mbx->read;
+    if ((val & 0xF) == channel)
+      break;
   }
 
   // return upper 28 bits of val
   return val >> 4;
 }
 
-void mailbox_write(unsigned char channel, unsigned int value) {
+void mailbox_write(uint8_t channel, uint32_t value) {
   value &= ~(0xF);
   value |= channel;
 
@@ -47,32 +50,9 @@ void mailbox_write(unsigned char channel, unsigned int value) {
 /**
  * Make a mailbox call. Returns 0 on failure, non-zero on success
  */
-int mbox_call(unsigned char ch) {
-
-  // unsigned int r = (((unsigned int)((unsigned long)&mbox) & ~0xF) | (ch &
-  // 0xF));
-
-  mailbox_write(ch, (unsigned int)mbox);
-
+int mbox_call(uint8_t ch) {
+  // uint32_t array_addr = 0;
+  // printf("Mbox address %p", mbox);
+  mailbox_write(ch, (uint32_t)mbox);
   return mailbox_read(ch);
-
-  /* /\* wait until we can write to the mailbox *\/ */
-  /* do { */
-  /*   asm volatile("nop"); */
-  /* } while (*MBOX_STATUS & MBOX_FULL); */
-  /* /\* write the address of our message to the mailbox with channel identifier
-   * *\/ */
-  /* *MBOX_WRITE = r; */
-  /* /\* now wait for the response *\/ */
-  /* while (1) { */
-  /*   /\* is there a response? *\/ */
-  /*   do { */
-  /*     asm volatile("nop"); */
-  /*   } while (*MBOX_STATUS & MBOX_EMPTY); */
-  /*   /\* is it a response to our message? *\/ */
-  /*   if (r == *MBOX_READ) */
-  /*     /\* is it a valid successful response? *\/ */
-  /*     return mbox[1] == MBOX_RESPONSE; */
-  /* } */
-  // return 0;
 }
