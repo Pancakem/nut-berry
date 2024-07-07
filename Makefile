@@ -1,6 +1,6 @@
-ARMGNU ?= aarch64-elf
+ARMGNU ?= aarch64-linux-gnu
 
-COPS = -Wall -g -Iinclude -ffreestanding -nostdlib -nostartfiles -g3 -gdwarf-2 -std=c2x -fpic #-Werror
+COPS = -Wall -g -Iinclude -ffreestanding -nostdlib -nostartfiles -g3 -gdwarf-2 -std=c2x -fpic
 ASMOPS = -Iinclude
 
 SRC_DIR = src

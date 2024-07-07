@@ -23,16 +23,16 @@ void pl011_uart_init() {
   *UART0_CR = 0; // turn off UART0
 
   /* set up clock for consistent divisor values */
-  mbox[0] = 9 * 4;
-  mbox[1] = MBOX_REQUEST;
-  mbox[2] = MBOX_TAG_SETCLKRATE; // set clock rate
-  mbox[3] = 12;
-  mbox[4] = 8;
-  mbox[5] = 2;       // UART clock
-  mbox[6] = 4000000; // 4Mhz
-  mbox[7] = 0;       // clear turbo
-  mbox[8] = MBOX_TAG_LAST;
-  mbox_call(MBOX_CH_PROP);
+  /* mbox[0] = 9 * 4; */
+  /* mbox[1] = MBOX_REQUEST; */
+  /* mbox[2] = MBOX_TAG_SETCLKRATE; // set clock rate */
+  /* mbox[3] = 12; */
+  /* mbox[4] = 8; */
+  /* mbox[5] = 2;       // UART clock */
+  /* mbox[6] = 4000000; // 4Mhz */
+  /* mbox[7] = 0;       // clear turbo */
+  /* mbox[8] = MBOX_TAG_LAST; */
+  /* mbox_call(MBOX_CH_PROP); */
 
   /* map UART0 to GPIO pins */
   r = *GPFSEL1;

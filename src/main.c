@@ -1,33 +1,14 @@
-#include "framebuffer.h"
 #include "mbox.h"
+#include "mm.h"
 #include "pl011_uart.h"
 #include "printf.h"
+#include "screen.h"
 #include "timer.h"
 #include "util.h"
 
 int device_serial(char *serial) {
-  mbox[0] = 8 * 4;        // length of the message
-  mbox[1] = MBOX_REQUEST; // this is a request message
-
-  mbox[2] = MBOX_TAG_GETSERIAL; // get serial number command
-  mbox[3] = 8;                  // buffer size
-  mbox[4] = 8;
-  mbox[5] = 0; // clear output buffer
-  mbox[6] = 0;
-
-  mbox[7] = MBOX_TAG_LAST;
-
-  // send the message to the GPU and receive answer
-  if (mbox_call(MBOX_CH_PROP)) {
-    char val[9];
-    bin_to_hex(val, mbox[6]);
-    strcat(serial, val);
-    bin_to_hex(val, mbox[5]);
-    strcat(serial, val);
-    return 0;
-  }
-
-  return 1;
+  memcpy(serial, "serial<>number", 15);
+  return 0;
 }
 
 char *uname() { return "\nNut Berry"; }
@@ -37,6 +18,8 @@ void kmain() {
   init_printf(NULL, putc);
 
   printf("Booting Nut Berry!\n");
+
+  /* printf("Sizeof mailbox_t %d\n", sizeof(mailbox_t)); */
 
   char serial[20] = {0};
   if (device_serial(serial) == 0) {
@@ -51,16 +34,11 @@ void kmain() {
   printf("\nEnabling timer\n");
   enable_timer();
 
-  framebuffer_t fb;
-  printf("Initializing framebuffer\n");
-  // int res =
-  init_framebuffer(&fb);
-  /* if (res != 0) */
-  /*   printf("framebuffer init failed %d\n", res); */
-  /* else */
-  /* printf("Resolution:\n \t Height: %d\n\t Width: %d\n\t Pitch: %d",
-   * fb.height, */
-  /*        fb.width, fb.pitch); */
+  printf("Initializing screen\n");
+  init_screen();
+  printf("Screen initialized\n");
+
+  screen_print("Hello from Nut Berry\n");
 
   // echo everything back
   while (1) {

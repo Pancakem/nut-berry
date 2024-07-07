@@ -1,58 +1,104 @@
-#include "mbox.h"
-#include "gpio.h"
-#include "printf.h"
-
 #include <stdint.h>
 
-/* mailbox message buffer */
-volatile uint32_t __attribute__((aligned(16))) mbox[36];
+#include "mbox.h"
+#include "util.h"
 
-#define VIDEOCORE_MBOX (MMIO_BASE + 0x0000B880)
-#define MBOX_READ ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x0))
-#define MBOX_POLL ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x10))
-#define MBOX_SENDER ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x14))
-#define MBOX_STATUS ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x18))
-#define MBOX_CONFIG ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x1C))
-#define MBOX_WRITE ((volatile unsigned int *)(VIDEOCORE_MBOX + 0x20))
-#define MBOX_RESPONSE 0x80000000
-#define MBOX_FULL 0x80000000
-#define MBOX_EMPTY 0x40000000
+static uint32_t box[36] __attribute__((aligned(16)));
 
-/* map struct to the base address  */
-static mailbox_t *mbx = (mailbox_t *)VIDEOCORE_MBOX;
+mail_message_t mailbox_read(int channel) {
+  mail_status_t stat;
+  mail_message_t res;
 
-int mailbox_read(uint8_t channel) {
-  uint32_t val;
+  do {
+    do {
+      stat = *MAIL0_STATUS;
+    } while (stat.empty);
 
-  while (1) {
-    while (mbx->status & MBOX_EMPTY)
-      ;
-    val = mbx->read;
-    if ((val & 0xF) == channel)
-      break;
+    res = *MAIL0_READ;
+  } while (res.channel != channel);
+  return res;
+}
+
+void mailbox_send(mail_message_t msg, int channel) {
+  mail_status_t stat;
+  msg.channel = channel;
+
+  do {
+    stat = *MAIL0_STATUS;
+  } while (stat.full);
+
+  mail_message_t *addr = (void *)MAIL0_WRITE;
+  *addr = msg;
+}
+
+static uint32_t get_value_buffer_len(property_message_tag_t *tag) {
+  switch (tag->proptag) {
+  case FB_ALLOCATE_BUFFER:
+  case FB_GET_PHYSICAL_DIMENSIONS:
+  case FB_SET_PHYSICAL_DIMENSIONS:
+  case FB_GET_VIRTUAL_DIMENSIONS:
+  case FB_SET_VIRTUAL_DIMENSIONS:
+    return 8;
+
+  case FB_GET_BITS_PER_PIXEL:
+  case FB_SET_BITS_PER_PIXEL:
+  case FB_GET_BYTES_PER_ROW:
+    return 4;
+  case FB_RELEASE_BUFFER:
+  default:
+    return 0;
+  }
+}
+
+int send_messages(property_message_tag_t *tags) {
+  property_message_buffer_t *msg;
+  mail_message_t mail;
+  uint32_t bufsize = 0, i, len, bufpos;
+
+  // calculate the sizes of each tag
+  for (i = 0; tags[i].proptag != NULL_TAG; ++i) {
+    bufsize += get_value_buffer_len(&tags[i]) + 3 * sizeof(uint32_t);
   }
 
-  // return upper 28 bits of val
-  return val >> 4;
-}
+  // add the buffer size, buffer req/resp code and buffer end tag sizes
+  bufsize += 3 * sizeof(uint32_t);
 
-void mailbox_write(uint8_t channel, uint32_t value) {
-  value &= ~(0xF);
-  value |= channel;
+  // buffer size must be 16 byte aligned; borrow from the box
+  msg = (property_message_buffer_t *)box;
 
-  // wait till it is available
-  while ((mbx->status & MBOX_FULL) != 0)
-    ;
+  msg->size = bufsize;
+  msg->req_res_code = REQUEST;
 
-  mbx->write = value;
-}
+  // copy the messaes into buffer
+  for (i = 0, bufpos = 0; tags[i].proptag != NULL_TAG; ++i) {
+    len = get_value_buffer_len(&tags[i]);
+    msg->tags[bufpos++] = tags[i].proptag;
+    msg->tags[bufpos++] = len;
+    msg->tags[bufpos++] = 0;
+    memcpy((char *)msg->tags + bufpos, (const char *)&tags[i].value_buffer,
+           len);
+    bufpos += len / 4;
+  }
 
-/**
- * Make a mailbox call. Returns 0 on failure, non-zero on success
- */
-int mbox_call(uint8_t ch) {
-  // uint32_t array_addr = 0;
-  // printf("Mbox address %p", mbox);
-  mailbox_write(ch, (uint32_t)mbox);
-  return mailbox_read(ch);
+  msg->tags[bufpos] = 0;
+
+  // send
+  mail.data = ((uint32_t)msg) >> 4;
+
+  mailbox_send(mail, PROPERTY_CHANNEL);
+  mail = mailbox_read(PROPERTY_CHANNEL);
+
+  if (msg->req_res_code == REQUEST) {
+    return 1;
+  } else if (msg->req_res_code == RESPONSE_ERROR)
+    return 2;
+
+  for (i = 0, bufpos = 0; tags[i].proptag != NULL_TAG; ++i) {
+    len = get_value_buffer_len(&tags[i]);
+    bufpos += 3; // skip over the tag bookkeeping info
+    memcpy((char *)&tags[i].value_buffer, (const char *)msg->tags + bufpos,
+           len);
+    bufpos += len / 4;
+  }
+  return 0;
 }

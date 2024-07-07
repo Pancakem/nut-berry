@@ -3,28 +3,22 @@
 
 #include <stdint.h>
 
-typedef struct {
-  uint32_t height; // physical height
-  uint32_t width;  // physical width
-  uint32_t pitch;  // Set by GPU. Zero first
-  uint32_t depth;
-  uint32_t x_offset;
-  uint32_t y_offset;
-  uintptr_t pointer; // the pointer to the framebuffer into which our code
-                     // should write. This is set by the GPU. We will zero
-                     // it before passing this structure to the GPU
-  uint32_t size;     // size of the framebuffer, also set by GPU, we will zero
-                     // it also before passing to the GPU
-  uint32_t isrgb;
-} framebuffer_t;
-
-int init_framebuffer(framebuffer_t *fb);
+#define COLORDEPTH 24
+#define BYTES_PER_PIXEL COLORDEPTH / 8
 
 typedef struct {
-  uint8_t red;
-  uint8_t green;
-  uint8_t blue;
-} pixel_t;
+  uint32_t width;
+  uint32_t height;
+  uint32_t pitch;
+  void *buf;
+  uint32_t buf_size;
+  uint32_t chars_width;
+  uint32_t chars_height;
+  uint32_t chars_x;
+  uint32_t chars_y;
+} framebuffer_info_t;
 
-void write_pixel(uint8_t x, uint8_t y, const pixel_t *pixel, framebuffer_t *fb);
+extern framebuffer_info_t fbinfo;
+
+int init_framebuffer(void);
 #endif
