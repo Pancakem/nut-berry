@@ -1,3 +1,4 @@
+#include "irq.h"
 #include "mbox.h"
 #include "mm.h"
 #include "pl011_uart.h"
@@ -31,12 +32,14 @@ void kmain() {
   int el = getcurrentEL();
   printf("Current EL is %d\n", el);
 
-  printf("\nEnabling timer\n");
+  printf("Initializing IRQ Vector\n");
+  irq_vector_init();
+
+  printf("Initializing timer\n");
   enable_timer();
 
   printf("Initializing screen\n");
   init_screen();
-  printf("Screen initialized\n");
 
   screen_print("Hello from Nut Berry\n");
 

@@ -1,6 +1,7 @@
 #include "timer.h"
 #include "mm.h"
 #include "pl011_uart.h"
+#include "printf.h"
 #include "util.h"
 
 const unsigned int interval = 200000;
@@ -16,5 +17,5 @@ void handle_timer_irq(void) {
   curVal += interval;
   mmio_write((unsigned int *)TIMER_C1, curVal);
   mmio_write((unsigned int *)TIMER_CS, TIMER_CS_M1);
-  pl011_uart_puts("Timer interrupt received\n\r");
+  printf("Timer interrupt received\n\r");
 }
